@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand Gesture Rock Paper Scissors</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+            min-height: 100vh;
+            align-items: start;
+        }
+
+        .main-section {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 300;
+        }
+
+        .camera-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .video-container {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            margin: 0 auto;
+            display: block;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+        }
+
+        #video {
+            width: 100%;
+            max-width: 640px;
+            height: 480px;
+            object-fit: cover;
+            transform: scaleX(-1);
+            display: block;
+        }
+
+        .gesture-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.6));
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 15px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .status {
+            text-align: center;
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border-radius: 15px;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .status.loading {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.1));
+            color: #fff;
+        }
+
+        .status.ready {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.2), rgba(40, 167, 69, 0.1));
+            color: #fff;
+        }
+
+        .status.error {
+            background: linear-gradient(135deg, rgba(220, 53, 69, 0.2), rgba(220, 53, 69, 0.1));
+            color: #fff;
+        }
+
+        .game-display {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .player-choice, .computer-choice {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+
+        .player-choice:hover, .computer-choice:hover {
+            transform: translateY(-5px);
+        }
+
+        .choice-emoji {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.3));
+        }
+
+        .choice-label {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .vs {
+            font-size: 3rem;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .result {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            background: rgba(255, 255, 255, 0.2);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .score-board {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .score-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: white;
+            text-align: center;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .score {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .score-item {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 15px;
+            flex: 1;
+            margin: 0 0.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .score-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .score-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .instructions h3 {
+            color: white;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .gesture-guide {
+            display: flex;
+            justify-content: space-around;
+            gap: 1rem;
+        }
+
+        .gesture-item {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+
+        .gesture-item:hover {
+            transform: translateY(-3px);
+        }
+
+        .gesture-item .emoji {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3));
+        }
+
+        .gesture-item .label {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+            line-height: 1.3;
+        }
+
+        .game-history {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .game-history h2 {
+            color: white;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        #history-list {
+            list-style: none;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        #history-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #history-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        #history-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        #history-list li {
+            padding: 0.8rem;
+            margin-bottom: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: white;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            transition: transform 0.2s ease;
+        }
+
+        #history-list li:hover {
+            transform: translateX(5px);
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .sidebar {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            #video {
+                height: 360px;
+            }
+
+            .game-display {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            .choice-emoji {
+                font-size: 4rem;
+            }
+
+            .vs {
+                font-size: 2rem;
+            }
+
+            .gesture-guide {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .gesture-item {
+                padding: 0.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            #video {
+                height: 280px;
+            }
+
+            .choice-emoji {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-section">
+            <div class="header">
+                <h1>🎮 Hand Gesture Battle</h1>
+                <div class="subtitle">Rock • Paper • Scissors with AI Vision</div>
+            </div>
+            
+            <div id="status" class="status loading">🚀 Loading camera and AI model...</div>
+            
+            <div class="camera-section">
+                <div class="video-container">
+                    <video id="video" autoplay muted playsinline></video>
+                    <div id="gesture-overlay" class="gesture-overlay">✋ Show your hand</div>
+                </div>
+            </div>
+
+            <div class="game-display">
+                <div class="player-choice">
+                    <div id="player-emoji" class="choice-emoji">❓</div>
+                    <div class="choice-label">Your Move</div>
+                </div>
+                <div class="vs">VS</div>
+                <div class="computer-choice">
+                    <div id="computer-emoji" class="choice-emoji">❓</div>
+                    <div class="choice-label">Computer</div>
+                </div>
+            </div>
+
+            <div id="result" class="result">🎯 Make a gesture to start playing!</div>
+        </div>
+
+        <div class="sidebar">
+            <div class="controls">
+                <button id="start-btn" class="btn" disabled>🎮 Start Game</button>
+                <button id="reset-btn" class="btn">🔄 Reset Score</button>
+            </div>
+
+            <div class="score-board">
+                <div class="score-title">🏆 Score Board</div>
+                <div class="score">
+                    <div class="score-item">
+                        <div class="score-number" id="player-score">0</div>
+                        <div class="score-label">You</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-number" id="computer-score">0</div>
+                        <div class="score-label">AI</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="instructions">
+                <h3>🎯 How to Play</h3>
+                <div class="gesture-guide">
+                    <div class="gesture-item">
+                        <div class="emoji">✊</div>
+                        <div class="label">Rock<br>Closed Fist</div>
+                    </div>
+                    <div class="gesture-item">
+                        <div class="emoji">✋</div>
+                        <div class="label">Paper<br>Open Hand</div>
+                    </div>
+                    <div class="gesture-item">
+                        <div class="emoji">✌</div>
+                        <div class="label">Scissors<br>Peace Sign</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-history">
+                <h2>📊 Recent Games</h2>
+                <ul id="history-list"></ul>
+            </div>
+        </div>
+    </div></body>
+
+    <!-- MediaPipe Hands -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <script>
+        class HandGestureGame {
+            constructor() {
+                this.playerScore = 0;
+                this.computerScore = 0;
+                this.isGameActive = false;
+                this.lastGesture = null;
+                this.gestureStabilityCount = 0;
+                this.requiredStabilityCount = 5; // Frames needed for stable gesture
+                this.gameInProgress = false;
+                this.cooldownTime = 2000; // 2 seconds between games
+                this.lastGameTime = 0;
+
+                this.initializeElements();
+                this.initializeMediaPipe();
+            }
+
+            initializeElements() {
+                this.video = document.getElementById('video');
+                this.statusDiv = document.getElementById('status');
+                this.gestureOverlay = document.getElementById('gesture-overlay');
+                this.startBtn = document.getElementById('start-btn');
+                this.resetBtn = document.getElementById('reset-btn');
+                this.playerScoreSpan = document.getElementById('player-score');
+                this.computerScoreSpan = document.getElementById('computer-score');
+                this.playerEmoji = document.getElementById('player-emoji');
+                this.computerEmoji = document.getElementById('computer-emoji');
+                this.resultDiv = document.getElementById('result');
+                this.historyList = document.getElementById('history-list');
+
+                this.startBtn.addEventListener('click', () => this.toggleGame());
+                this.resetBtn.addEventListener('click', () => this.resetScore());
+            }
+
+            async initializeMediaPipe() {
+                try {
+                    // Initialize MediaPipe Hands
+                    this.hands = new Hands({
+                        locateFile: (file) => {
+                            return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+                        }
+                    });
+
+                    this.hands.setOptions({
+                        maxNumHands: 1,
+                        modelComplexity: 1,
+                        minDetectionConfidence: 0.5,
+                        minTrackingConfidence: 0.5
+                    });
+
+                    this.hands.onResults((results) => this.onResults(results));
+
+                    // Initialize camera
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                            width: 320, 
+                            height: 240,
+                            facingMode: 'user'
+                        } 
+                    });
+                    
+                    this.video.srcObject = stream;
+                    
+                    this.camera = new Camera(this.video, {
+                        onFrame: async () => {
+                            await this.hands.send({ image: this.video });
+                        },
+                        width: 320,
+                        height: 240
+                    });
+
+                    await this.camera.start();
+                    
+                    this.updateStatus('ready', '✅ Camera ready! Click "Start Game" to begin');
+                    this.startBtn.disabled = false;
+
+                } catch (error) {
+                    console.error('Error initializing MediaPipe:', error);
+                    this.updateStatus('error', '❌ Error: Could not access camera or load AI model');
+                }
+            }
+
+            onResults(results) {
+                if (!this.isGameActive) return;
+
+                if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                    const landmarks = results.multiHandLandmarks[0];
+                    const gesture = this.recognizeGesture(landmarks);
+                    
+                    if (gesture) {
+                        if (gesture === this.lastGesture) {
+                            this.gestureStabilityCount++;
+                        } else {
+                            this.lastGesture = gesture;
+                            this.gestureStabilityCount = 1;
+                        }
+
+                        this.gestureOverlay.textContent = `${this.getEmoji(gesture)} ${gesture.toUpperCase()}`;
+
+                        // Play game when gesture is stable and cooldown has passed
+                        if (this.gestureStabilityCount >= this.requiredStabilityCount && 
+                            !this.gameInProgress && 
+                            Date.now() - this.lastGameTime > this.cooldownTime) {
+                            this.playGame(gesture);
+                        }
+                    } else {
+                        this.gestureOverlay.textContent = 'Show your hand clearly';
+                        this.lastGesture = null;
+                        this.gestureStabilityCount = 0;
+                    }
+                } else {
+                    this.gestureOverlay.textContent = 'Show your hand';
+                    this.lastGesture = null;
+                    this.gestureStabilityCount = 0;
+                }
+            }
+
+            recognizeGesture(landmarks) {
+                // Get landmark positions
+                const fingerTips = [4, 8, 12, 16, 20]; // Thumb, Index, Middle, Ring, Pinky tips
+                const fingerPips = [3, 6, 10, 14, 18]; // Finger PIP joints
+                
+                // Check if fingers are extended
+                const fingersUp = [];
+                
+                // Thumb (special case - check x coordinate)
+                if (landmarks[fingerTips[0]].x > landmarks[fingerPips[0]].x) {
+                    fingersUp.push(1);
+                } else {
+                    fingersUp.push(0);
+                }
+                
+                // Other fingers (check y coordinate)
+                for (let i = 1; i < 5; i++) {
+                    if (landmarks[fingerTips[i]].y < landmarks[fingerPips[i]].y) {
+                        fingersUp.push(1);
+                    } else {
+                        fingersUp.push(0);
+                    }
+                }
+
+                const totalFingers = fingersUp.reduce((a, b) => a + b, 0);
+
+                // Gesture recognition logic
+                if (totalFingers === 0) {
+                    return 'rock'; // Closed fist
+                } else if (totalFingers === 5) {
+                    return 'paper'; // Open hand
+                } else if (totalFingers === 2 && fingersUp[1] === 1 && fingersUp[2] === 1) {
+                    return 'scissors'; // Index and middle finger up
+                }
+
+                return null; // Unrecognized gesture
+            }
+
+            getEmoji(choice) {
+                const emojis = {
+                    rock: '✊',
+                    paper: '✋',
+                    scissors: '✌'
+                };
+                return emojis[choice] || '❓';
+            }
+
+            getComputerChoice() {
+                const choices = ['rock', 'paper', 'scissors'];
+                return choices[Math.floor(Math.random() * 3)];
+            }
+
+            determineWinner(playerChoice, computerChoice) {
+                if (playerChoice === computerChoice) return 'draw';
+
+                if (
+                    (playerChoice === 'rock' && computerChoice === 'scissors') ||
+                    (playerChoice === 'paper' && computerChoice === 'rock') ||
+                    (playerChoice === 'scissors' && computerChoice === 'paper')
+                ) {
+                    return 'win';
+                }
+
+                return 'lose';
+            }
+
+            async playGame(playerChoice) {
+                if (this.gameInProgress) return;
+                
+                this.gameInProgress = true;
+                this.lastGameTime = Date.now();
+
+                const computerChoice = this.getComputerChoice();
+                const result = this.determineWinner(playerChoice, computerChoice);
+
+                // Update display
+                this.playerEmoji.textContent = this.getEmoji(playerChoice);
+                this.computerEmoji.textContent = this.getEmoji(computerChoice);
+
+                // Update result
+                let resultText = '';
+                switch (result) {
+                    case 'win':
+                        resultText = '🎉 You Win!';
+                        this.playerScore++;
+                        break;
+                    case 'lose':
+                        resultText = '😢 You Lose!';
+                        this.computerScore++;
+                        break;
+                    default:
+                        resultText = '🤝 It\'s a Draw!';
+                }
+
+                this.resultDiv.textContent = resultText;
+                this.updateScore();
+                this.updateHistory(playerChoice, computerChoice, result);
+
+                // Reset game state after cooldown
+                setTimeout(() => {
+                    this.gameInProgress = false;
+                    this.resultDiv.textContent = '🎯 Make your next move!';
+                }, this.cooldownTime);
+            }
+
+            updateScore() {
+                this.playerScoreSpan.textContent = this.playerScore;
+                this.computerScoreSpan.textContent = this.computerScore;
+            }
+
+            updateHistory(playerChoice, computerChoice, result) {
+                const li = document.createElement('li');
+                const resultText = result === 'win' ? 'Won' : result === 'lose' ? 'Lost' : 'Draw';
+                li.textContent = `${this.getEmoji(playerChoice)} vs ${this.getEmoji(computerChoice)} - ${resultText}`;
+                this.historyList.insertBefore(li, this.historyList.firstChild);
+
+                // Keep only last 10 moves
+                if (this.historyList.children.length > 10) {
+                    this.historyList.removeChild(this.historyList.lastChild);
+                }
+            }
+
+            toggleGame() {
+                this.isGameActive = !this.isGameActive;
+                
+                if (this.isGameActive) {
+                    this.startBtn.textContent = '⏸️ Stop Game';
+                    this.updateStatus('ready', '🎮 Game Active - Show your gestures!');
+                    this.resultDiv.textContent = '🎯 Make your move!';
+                } else {
+                    this.startBtn.textContent = '🎮 Start Game';
+                    this.updateStatus('ready', '⏸️ Game Paused - Click "Start Game" to continue');
+                    this.resultDiv.textContent = '⏸️ Game paused';
+                    this.gestureOverlay.textContent = '⏸️ Game paused';
+                }
+            }
+
+            resetScore() {
+                this.playerScore = 0;
+                this.computerScore = 0;
+                this.updateScore();
+                this.historyList.innerHTML = '';
+                this.playerEmoji.textContent = '❓';
+                this.computerEmoji.textContent = '❓';
+                this.resultDiv.textContent = this.isGameActive ? '🎯 Make your move!' : '🎮 Click "Start Game" to begin';
+            }
+
+            updateStatus(type, message) {
+                this.statusDiv.className = `status ${type}`;
+                this.statusDiv.textContent = message;
+            }
+        }
+
+        // Initialize the game when the page loads
+        window.addEventListener('load', () => {
+            new HandGestureGame();
+        });
+    </script>
+</body>
+</html>
